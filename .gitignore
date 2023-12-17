@@ -1,0 +1,8 @@
+# The data of the application basically
+/pb_data
+
+# Air hot reload
+tmp
+
+# Admin password for local development
+password.txt
