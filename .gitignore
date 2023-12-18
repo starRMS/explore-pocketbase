@@ -3,6 +3,7 @@
 
 # Air hot reload
 tmp
+main
 
 # Admin password for local development
 password.txt

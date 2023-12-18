@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"pocketbase-go/tools/writer"
+	"github.com/starRMS/explore-pocketbase/tools/writer"
 
 	// Import migrations
-	_ "pocketbase-go/migrations"
+	_ "github.com/starRMS/explore-pocketbase/migrations"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"

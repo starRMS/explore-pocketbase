@@ -1,4 +1,4 @@
-module pocketbase-go
+module github.com/starRMS/explore-pocketbase
 
 go 1.21.5
 
