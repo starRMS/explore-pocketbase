@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/starRMS/explore-pocketbase/tools/encryptor"
 	"github.com/starRMS/explore-pocketbase/tools/writer"
 
 	// Import migrations
@@ -61,17 +62,21 @@ func main() {
 		id := e.Model.GetId()
 
 		return e.Dao.RunInTransaction(func(tx *daos.Dao) error {
-			record, err := e.Dao.FindRecordById("users", id)
+			record, err := tx.FindRecordById("users", id)
 			if err != nil {
 				writer.Error("OnModelAfterCreate - FindRecordById: %s\n", err)
 				return err
 			}
 
 			nik := record.Get("nik").(string)
-			writer.Log("Captured NIK: %s\n", nik)
-			record.Set("nik", "NIK_modified_using_custom_pocketbase_hooks")
+			encrypted, err := encryptor.AES_CBC_Encrypt(nik)
+			if err != nil {
+				writer.Error("unable to encrypt NIK: %s\n", err)
+				return err
+			}
+			record.Set("nik", encrypted)
 
-			if err := e.Dao.SaveRecord(record); err != nil {
+			if err := tx.SaveRecord(record); err != nil {
 				writer.Error("OnModelAfterCreate - SaveRecord: %s\n", err)
 				return err
 			}
