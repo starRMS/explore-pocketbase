@@ -5,15 +5,12 @@ import (
 	"errors"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
 var shutdownFuncs []func(context.Context) error
-
-const (
-	serviceName = "pocketbase"
-	environment = "development"
-	id          = 1
-)
 
 func Init(ctx context.Context, jaegerURL string) (err error) {
 	// Handles shutdown when error during
@@ -22,8 +19,23 @@ func Init(ctx context.Context, jaegerURL string) (err error) {
 		err = errors.Join(initErr, Shutdown(ctx))
 	}
 
+	// Resource
+	resource, err := resource.Merge(resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName("pocketbase"),
+			semconv.ServiceVersion("v0.20.0"),
+			semconv.ServiceInstanceID("pocketbase-app"),
+			attribute.String("env", "development"),
+		),
+	)
+	if err != nil {
+		handleErr(err)
+		return
+	}
+
 	// Trace Provider
-	tp, err := NewJaegerTracerProvider(jaegerURL)
+	tp, err := newJaegerTracerProvider(jaegerURL, resource)
 	if err != nil {
 		handleErr(err)
 		return
