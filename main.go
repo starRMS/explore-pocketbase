@@ -33,7 +33,7 @@ func main() {
 		Bootstrap Server - Initializing packages
 		*************************************************
 	*/
-	app.OnBeforeBootstrap().Add(func(e *core.BootstrapEvent) error {
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
 		if err := opentelemetry.Init(ctx, "http://localhost:14268/api/traces"); err != nil {
 			log.Fatalf("error when initializing opentelemetry %s\n", err)
 		}
