@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/starRMS/explore-pocketbase/hooks"
+	"github.com/starRMS/explore-pocketbase/pkg/opentelemetry"
 	"github.com/starRMS/explore-pocketbase/tools/writer"
 
 	// Import migrations
@@ -18,8 +22,41 @@ import (
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	app := pocketbase.New()
 	writer := writer.NewWriter()
+
+	/*
+		*************************************************
+		Bootstrap Server - Initializing packages
+		*************************************************
+	*/
+	app.OnBeforeBootstrap().Add(func(e *core.BootstrapEvent) error {
+		if err := opentelemetry.Init(ctx, "http://localhost:14268/api/traces"); err != nil {
+			log.Fatalf("error when initializing opentelemetry %s\n", err)
+		}
+
+		return nil
+	})
+
+	/*
+		*************************************************
+		App Terminate - Handle shutdown properly
+		*************************************************
+	*/
+	app.OnTerminate().Add(func(e *core.TerminateEvent) error {
+		shutdownCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+		// Gracefully shutdown opentelemetry
+		writer.Log("Shutting down opentelemetry...")
+		if err := opentelemetry.Shutdown(shutdownCtx); err != nil {
+			writer.Errorf("error while shutting down opentelemetry %s\n", err)
+			return err
+		}
+		return nil
+	})
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		// Auto created migration files from the
@@ -50,7 +87,17 @@ func main() {
 		Start the app
 		*************************************************
 	*/
-	if err := app.Start(); err != nil {
-		log.Fatal(err)
+	// FIXME: No need graceful shutdown pocketbase app??
+	pbServeError := make(chan error, 1)
+	go func() {
+		pbServeError <- app.Start()
+	}()
+
+	select {
+	case <-pbServeError:
+		return
+	case <-ctx.Done():
+		writer.Log("Shutting down application...")
+		stop()
 	}
 }
