@@ -1,10 +1,14 @@
 package hooks
 
 import (
+	"context"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/starRMS/explore-pocketbase/tools/encryptor"
 	"github.com/starRMS/explore-pocketbase/tools/writer"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type userHooks int
@@ -13,26 +17,33 @@ var User userHooks
 
 func (userHooks) ModelAfterCreate(writer *writer.Writer) func(e *core.ModelEvent) error {
 	return func(e *core.ModelEvent) error {
+		// Start otel tracer
+		tracer := otel.Tracer("")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		_, span := tracer.Start(ctx, "user-model-encrypt-fields")
+		defer span.End(trace.WithStackTrace(true))
+
 		// Changes the value of user NIK after created.
 		id := e.Model.GetId()
 
 		return e.Dao.RunInTransaction(func(tx *daos.Dao) error {
 			record, err := tx.FindRecordById("users", id)
 			if err != nil {
-				writer.Error("OnModelAfterCreate - FindRecordById: %s\n", err)
+				writer.Errorf("OnModelAfterCreate - FindRecordById: %s\n", err)
 				return err
 			}
 
 			nik := record.Get("nik").(string)
 			encrypted, err := encryptor.AES_CBC_Encrypt(nik)
 			if err != nil {
-				writer.Error("unable to encrypt NIK: %s\n", err)
+				writer.Errorf("unable to encrypt NIK: %s\n", err)
 				return err
 			}
 			record.Set("nik", encrypted)
 
 			if err := tx.SaveRecord(record); err != nil {
-				writer.Error("OnModelAfterCreate - SaveRecord: %s\n", err)
+				writer.Errorf("OnModelAfterCreate - SaveRecord: %s\n", err)
 				return err
 			}
 
@@ -46,7 +57,7 @@ func (userHooks) ModelAfterCreate(writer *writer.Writer) func(e *core.ModelEvent
 			// 	Bind(dbx.Params{
 			// 		"id": id,
 			// 	}).One(&user); err != nil {
-			// 	writer.Error("UserOnModelAfterCreate %s\n", err)
+			// 	writer.Errorf("UserOnModelAfterCreate %s\n", err)
 			// 	return err
 			// }
 			//
@@ -56,7 +67,7 @@ func (userHooks) ModelAfterCreate(writer *writer.Writer) func(e *core.ModelEvent
 			// 	"nik": user.NIK,
 			// 	"id":  user.Id,
 			// }).Execute(); err != nil {
-			// 	writer.Error("UserOnModelAfterCreate %s\n", err)
+			// 	writer.Errorf("UserOnModelAfterCreate %s\n", err)
 			// 	return err
 			// }
 			//
