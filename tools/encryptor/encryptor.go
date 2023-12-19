@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	// TODO: read from environment
 	key string = "my32digitkey12345678901234567890"
 	iv  string = "my16digitIvKey12"
 )
