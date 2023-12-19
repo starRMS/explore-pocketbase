@@ -11,6 +11,7 @@ import (
 	"github.com/starRMS/explore-pocketbase/hooks"
 	"github.com/starRMS/explore-pocketbase/pkg/opentelemetry"
 	"github.com/starRMS/explore-pocketbase/tools/writer"
+	"go.opentelemetry.io/otel"
 
 	// Import migrations
 	_ "github.com/starRMS/explore-pocketbase/migrations"
@@ -80,7 +81,7 @@ func main() {
 		User Hooks
 		*************************************************
 	*/
-	app.OnModelAfterCreate("users").Add(hooks.User.ModelAfterCreate(writer))
+	app.OnModelAfterCreate("users").Add(hooks.User.ModelAfterCreate(writer, otel.Tracer("user-trace")))
 
 	/*
 		*************************************************
