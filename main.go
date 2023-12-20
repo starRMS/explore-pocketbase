@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/starRMS/explore-pocketbase/hooks"
-	"github.com/starRMS/explore-pocketbase/pkg/monitoring"
+	"github.com/starRMS/explore-pocketbase/pkg/observability"
+	"github.com/starRMS/explore-pocketbase/routers/middlewares"
 	"github.com/starRMS/explore-pocketbase/tools/writer"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 
 	// Import migrations
 	_ "github.com/starRMS/explore-pocketbase/migrations"
@@ -35,10 +37,31 @@ func main() {
 		*************************************************
 	*/
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
-		if err := monitoring.Init(ctx, "http://localhost:14268/api/traces"); err != nil {
+		if err := observability.Init(ctx); err != nil {
 			log.Fatalf("error when initializing opentelemetry %s\n", err)
 		}
 
+		return nil
+	})
+
+	/*
+		*************************************************
+		Before Serve - Adding routes/middlewares
+		*************************************************
+	*/
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		meter := otel.Meter("http.server")
+		histogram, err := meter.Float64Histogram("http.server.response.latency",
+			metric.WithDescription("HTTP response latency"),
+			metric.WithUnit("ms"),
+		)
+		if err != nil {
+			writer.Logf("error initializing http latency meter: %s\n", err)
+			return err
+		}
+
+		// Metric middleware to record latency
+		e.Router.Use(middlewares.MetricMiddleware(histogram))
 		return nil
 	})
 
@@ -52,7 +75,7 @@ func main() {
 		defer cancel()
 		// Gracefully shutdown opentelemetry
 		writer.Log("Shutting down opentelemetry...")
-		if err := monitoring.Shutdown(shutdownCtx); err != nil {
+		if err := observability.Shutdown(shutdownCtx); err != nil {
 			writer.Errorf("error while shutting down opentelemetry %s\n", err)
 			return err
 		}
