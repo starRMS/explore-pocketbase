@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/starRMS/explore-pocketbase/hooks"
-	"github.com/starRMS/explore-pocketbase/pkg/opentelemetry"
+	"github.com/starRMS/explore-pocketbase/pkg/monitoring"
 	"github.com/starRMS/explore-pocketbase/tools/writer"
 	"go.opentelemetry.io/otel"
 
@@ -35,7 +35,7 @@ func main() {
 		*************************************************
 	*/
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
-		if err := opentelemetry.Init(ctx, "http://localhost:14268/api/traces"); err != nil {
+		if err := monitoring.Init(ctx, "http://localhost:14268/api/traces"); err != nil {
 			log.Fatalf("error when initializing opentelemetry %s\n", err)
 		}
 
@@ -52,7 +52,7 @@ func main() {
 		defer cancel()
 		// Gracefully shutdown opentelemetry
 		writer.Log("Shutting down opentelemetry...")
-		if err := opentelemetry.Shutdown(shutdownCtx); err != nil {
+		if err := monitoring.Shutdown(shutdownCtx); err != nil {
 			writer.Errorf("error while shutting down opentelemetry %s\n", err)
 			return err
 		}
