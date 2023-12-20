@@ -1,4 +1,4 @@
-package opentelemetry
+package monitoring
 
 import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
