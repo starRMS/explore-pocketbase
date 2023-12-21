@@ -18,7 +18,7 @@ func MetricMiddleware(histogram metric.Float64Histogram) func(next echo.HandlerF
 
 				histogram.Record(c.Request().Context(), duration,
 					metric.WithAttributes(
-						attribute.String("http.request.path", c.Request().URL.RawPath),
+						attribute.String("http.request.path", c.Path()),
 						attribute.String("http.request.method", c.Request().Method),
 					),
 				)

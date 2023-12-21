@@ -25,7 +25,6 @@ exporters:
   prometheus:
     endpoint: otel_collector:9464
 
-
 # (4) Service
 service:
   # A pipeline consists of a set of receivers, processors and exporters.
