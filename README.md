@@ -6,32 +6,28 @@
 # Table of Contents
 - [Introduction](#introduction)
 - [Components](#components)
-  - [Observability](#1-observability)
+- [Getting Started](#getting-started)
 
 ## Introduction
 This project serves as an exploration to [pocketbase](https://pocketbase.io) and template for using pocketbase integrated with other extra components.
 
 ## Components
+The components include are:
+1. [Pocketbase](https://pocketbase.io) - The main application
+2. Observability Stack:
+    - [Opentelemetry](https://opentelemetry.io/)
+    - [Jaeger](https://www.jaegertracing.io/)
+    - [Prometheus](https://prometheus.io/)
+    - [Grafana](https://grafana.com/)
 
-### 1. Observability
-We want our application to be observable. Hence we integrated [opentelemetry](https://opentelemetry.io/) into the application with the help of [Jaeger](https://www.jaegertracing.io/).
-##### How to start - Jaeger
-To start Jaeger please refer to this [link](https://www.jaegertracing.io/docs/1.52/getting-started/) to start jaeger suiting your usecase. For starter, we recommend starting jaeger with its all-in-one mode that is simply running the command below:
+## Getting Started
+As mentioned, this app already included the observability stack. Before starting the main application we should be spinning up the observability stack.
+Head to `docker/observability` folder and then run:
 ```bash
-docker run --rm --name jaeger \
-  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
-  -p 6831:6831/udp \
-  -p 6832:6832/udp \
-  -p 5778:5778 \
-  -p 16686:16686 \
-  -p 4317:4317 \
-  -p 4318:4318 \
-  -p 14250:14250 \
-  -p 14268:14268 \
-  -p 14269:14269 \
-  -p 9411:9411 \
-  jaegertracing/all-in-one:1.52
+docker compose up --build -d
 ```
-
-Then you can head to [http://localhost:16686](http://localhost:16686) to see the jaeger UI.
-
+This will spin up Jaeger, Prometheus and Grafana in a container. Next, head to the root directory folder and run:
+```bash
+go run . serve
+```
+The pocketbase app admin page will be available in [http://localhost:8090/_/](http://localhost:8090/_/). Meanwhile, the Jaeger client will be available at [http://localhost:16686](http://localhost:16686), Prometheus will be available at [http://localhost:9090](http://localhost:9090) and the Grafana will be available at [http://localhost:3000](http://localhost:3000).
