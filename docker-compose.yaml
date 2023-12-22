@@ -1,7 +1,21 @@
 version: '3.3'
 services:
+    # Pocketbase
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: pocketbase_app
+        ports:
+            - "8090:8090"
+        networks:
+            - pocketbase_observability_net
+        volumes:
+            - pocketbase_pb_data:/pocketbase/pb_data
+
     # OpenTelemetry Collector
     otel_collector:
+        container_name: pocketbase_otel_collector
         image: otel/opentelemetry-collector-contrib:0.70.0
         command: --config=/etc/otel-collector-config.yaml
         volumes:
@@ -17,6 +31,7 @@ services:
 
     # Jaeger
     jaeger:
+        container_name: pocketbase_jaeger
         image: jaegertracing/all-in-one:1.41.0
         ports:
             - "14250:14250" # Collector gRPC
@@ -26,10 +41,10 @@ services:
 
     # Prometheus
     prometheus:
+        container_name: pocketbase_prometheus
         image: prom/prometheus:v2.42.0
         command:
             - --config.file=/etc/prometheus/prometheus-config.yaml
-            # - --feature-gates=pkg.translator.prometheus.NormalizeName
         volumes:
             - ./prometheus-config.yaml:/etc/prometheus/prometheus-config.yaml
         ports:
@@ -39,6 +54,7 @@ services:
 
     # Grafana
     grafana:
+        container_name: pocketbase_grafana
         image: grafana/grafana-oss
         ports:
             - "3000:3000"
@@ -53,4 +69,6 @@ networks:
     pocketbase_observability_net: 
 volumes:
     grafana-storage:
+    pocketbase_pb_data:
+
             

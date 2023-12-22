@@ -1,0 +1,13 @@
+.air.toml
+.git
+.gitignore
+
+main
+password.txt
+tmp/
+README.md
+
+docker-compose.yml
+
+otel-collector-config.yaml
+prometheus-config.yaml

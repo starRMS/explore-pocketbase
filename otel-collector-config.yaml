@@ -5,7 +5,7 @@ receivers:
   otlp:
     protocols:
       http:
-        endpoint: 0.0.0.0:4318 # It is important that we do not use localhost
+        endpoint: otel_collector:4318 # It is important that we do not use localhost
 
 # (2) Processors
 processors:

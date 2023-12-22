@@ -41,7 +41,7 @@ func Init(ctx context.Context) (err error) {
 
 	// Trace Exporter -.
 	traceExporter, err := otlptracehttp.New(ctx,
-		otlptracehttp.WithEndpoint("localhost:4318"),
+		otlptracehttp.WithEndpoint("otel_collector:4318"),
 		otlptracehttp.WithInsecure(),
 	)
 	if err != nil {
@@ -59,7 +59,7 @@ func Init(ctx context.Context) (err error) {
 
 	// Metrics Exporter -.
 	metricsExporter, err := otlpmetrichttp.New(ctx,
-		otlpmetrichttp.WithEndpoint("localhost:4318"),
+		otlpmetrichttp.WithEndpoint("otel_collector:4318"),
 		otlpmetrichttp.WithInsecure(),
 	)
 	if err != nil {
